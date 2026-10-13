@@ -164,3 +164,13 @@ REST update verbs — the rulesets API is PUT-based.
 
 **AVOID** (don't repeat):
 - Expecting `PATCH /repos/{o}/{r}/rulesets/{id}` to work because the user is repo ADMIN and the token has `repo` — GitHub 404s the write when the browser-issued gh OAuth token lacks effective admin-write authorization. Either change it in the UI, or `gh auth refresh -h github.com -s admin:org` first and retry the API.
+
+## 2026-09-16 — audit — no-fix advisories + the unpackaged vscode audit surface
+
+**KEEP** (do again):
+- When one package's audit fails, run `npm audit` (no level floor) in BOTH packages — `packages/vscode` carried 10 more findings the cli-only `audit` CI job never sees.
+- Grep the affected chain against the staged VSIX closure before reacting — vsce/eslint/vitest toolchain vulns never reach the shipped runtime (closure is jiti/@cdktf/hcl2json/fs-extra only).
+- `git pull` (not just `git fetch`) before branching fix work — a stale local main made this branch born-behind under the strict up-to-date ruleset, and the lockfile fix had to be redone on real main.
+
+**AVOID** (don't repeat):
+- Trusting npm's "fix available via `npm audit fix`" on an advisory whose range is `*` — that means NO fixed release exists (braces GHSA-vfj7-8cjw-p6xm, latest 3.0.3 is still in range). Only `audit fix --force` would "fix" it by ripping @vscode/vsce/secretlint majors out of the packaging toolchain. Wait for upstream; the `vscode` CI job deliberately has NO audit step until that chain is clean.
