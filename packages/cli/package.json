@@ -46,7 +46,7 @@
   },
   "overrides": {
     "typed-rest-client": {
-      "qs": "6.16.0"
+      "qs": "6.17.1"
     }
   },
   "publishConfig": {
@@ -82,6 +82,6 @@
     "prettier": "^3.4.2",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.65.0",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.12"
   }
 }
