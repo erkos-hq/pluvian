@@ -57,3 +57,6 @@ Choice: `physicalFile()` in the extension takes the last ` › `-separated segme
 
 ## 2026-09-03 — vscode-ext — manifest name `pluvian-vscode` (unscoped)
 Choice: unscoped manifest name `pluvian-vscode`, publisher `erkos` (id `erkos.pluvian-vscode`). Why: vsce rejects scoped names; P3 owns the final marketplace id anyway, so no reason to claim `pluvian` pre-publish. Rejected: `pluvian` (would pre-commit the marketplace id before the P3 naming pass); keeping `@erkos/pluvian-vscode` (vsce: invalid extension name).
+
+## 2026-11-06 — deps — typescript major stays Renovate-blocked (rechecked)
+Choice: keep `enabled: false` on the typescript major. Why: TS 7 (Go compiler) GA'd 2026-07-08 but ships NO compiler API — typescript-eslint cannot support it (#12518 supersedes #10940 as the tracking issue); our lint gate is type-aware. Recheck when typescript-eslint announces TS 7 support (tsgolint path). Rejected: the tsgo-for-typecheck + TS-5-for-eslint split — toolchain complexity for a typecheck that already takes seconds.
