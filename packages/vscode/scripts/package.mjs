@@ -14,7 +14,15 @@
 //   jiti           (no deps)
 //   @cdktf/hcl2json → fs-extra → graceful-fs, jsonfile, universalify
 import { spawnSync } from 'node:child_process'
-import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
+import { createRequire } from 'node:module'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -59,20 +67,42 @@ const engine = path.join(pack, 'node_modules', '@erkos', 'pluvian')
 cpSync(path.join(cli, 'package.json'), path.join(engine, 'package.json'))
 cpSync(path.join(cli, 'dist'), path.join(engine, 'dist'), { recursive: true })
 
-// Loaders + parser + their runtime deps.
-for (const name of [
-  'jiti',
-  '@cdktf/hcl2json',
-  'fs-extra',
-  'graceful-fs',
-  'jsonfile',
-  'universalify',
+// Loaders + parser + their runtime deps. Resolve each package the way the
+// ENGINE resolves it (walking up from packages/cli) — never assume flat
+// hoisting into this package's node_modules: a dep bump can re-nest
+// fs-extra under @cdktf/hcl2json and break path-built copies (that is
+// exactly how the majors bump broke CI the first time).
+const requireFromEngine = createRequire(
+  path.join(cli, 'dist', 'cli', 'check.js'),
+)
+const pkgRootOf = (requirer, name) => {
+  let dir = path.dirname(requirer.resolve(name))
+  for (;;) {
+    const manifest = path.join(dir, 'package.json')
+    if (existsSync(manifest)) {
+      const parsed = JSON.parse(readFileSync(manifest, 'utf8'))
+      if (parsed.name === name) return dir
+    }
+    const parent = path.dirname(dir)
+    if (parent === dir) die(`could not locate package root for ${name}`)
+    dir = parent
+  }
+}
+const hcl2jsonDir = pkgRootOf(requireFromEngine, '@cdktf/hcl2json')
+const requireFromHcl2json = createRequire(path.join(hcl2jsonDir, 'index.js'))
+for (const [requirer, name] of [
+  [requireFromEngine, 'jiti'],
+  [requireFromEngine, '@cdktf/hcl2json'],
+  [requireFromHcl2json, 'fs-extra'],
+  [requireFromHcl2json, 'graceful-fs'],
+  [requireFromHcl2json, 'jsonfile'],
+  [requireFromHcl2json, 'universalify'],
 ]) {
-  const src = path.join(pkgRoot, 'node_modules', ...name.split('/'))
-  cpSync(src, path.join(pack, 'node_modules', ...name.split('/')), {
-    recursive: true,
-    dereference: true,
-  })
+  cpSync(
+    pkgRootOf(requirer, name),
+    path.join(pack, 'node_modules', ...name.split('/')),
+    { recursive: true, dereference: true },
+  )
 }
 
 const vsce = path.join(pkgRoot, 'node_modules', '.bin', 'vsce')

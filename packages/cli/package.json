@@ -74,14 +74,14 @@
     "jiti": "^2.4.2"
   },
   "devDependencies": {
-    "@stryker-mutator/core": "^9.6.1",
-    "@stryker-mutator/vitest-runner": "^9.6.1",
-    "@types/node": "^22.10.5",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/vitest-runner": "^10.0.0",
+    "@types/node": "^26.0.0",
+    "@vitest/coverage-v8": "^5.0.0",
     "eslint": "^10.8.0",
     "prettier": "^3.4.2",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.65.0",
-    "vitest": "^4.1.12"
+    "vitest": "^5.0.0"
   }
 }
