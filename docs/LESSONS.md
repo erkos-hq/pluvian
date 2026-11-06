@@ -174,3 +174,13 @@ REST update verbs — the rulesets API is PUT-based.
 
 **AVOID** (don't repeat):
 - Trusting npm's "fix available via `npm audit fix`" on an advisory whose range is `*` — that means NO fixed release exists (braces GHSA-vfj7-8cjw-p6xm, latest 3.0.3 is still in range). Only `audit fix --force` would "fix" it by ripping @vscode/vsce/secretlint majors out of the packaging toolchain. Wait for upstream; the `vscode` CI job deliberately has NO audit step until that chain is clean.
+
+## 2026-11-06 — packaging — dev-dep majors broke path-assumed VSIX staging
+
+**KEEP** (do again):
+- Resolve staged runtime deps the way the ENGINE resolves them (`createRequire` from `packages/cli/dist` + package-root walk-up, in `package.mjs`) — staging now survives any npm dedupe/nesting layout.
+- The VSIX smoke gate caught the break in CI before anything shipped — the artifact-level test paid for itself.
+- Merge Renovate branches carrying MANUAL commits before pure Renovate ones: `@renovate rebase` recreates the branch from its own commits and silently drops the manual fix.
+
+**AVOID** (don't repeat):
+- Building `node_modules` copy paths from a dev machine's layout — hoisting is not a contract. The dev-deps majors re-nested `fs-extra` under `@cdktf/hcl2json` (both locally and on CI), and the path-built copy ENOENT'd only after the bump.
