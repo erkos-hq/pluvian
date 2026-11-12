@@ -130,28 +130,26 @@ Now every `.environment(Production)` rule applies to staging *and*
 production. (Conversely, mapping a folder to a *less* strict environment,
 or leaving it unmapped, is equally valid — it's your call.)
 
-On every invocation, the engine's very first action is:
+On every invocation, the engine's very first action is the version gate.
+As shipped it rides the `Result` failure track rather than calling
+`process.exit` (see `06-engine-architecture.md` §"EngineError"):
 
 ```typescript
-async function enforceVersion(): Promise<void> {
-  const config = readEngineConfig()
-  if (!config?.version) return // no pin configured, proceed
-
-  const running = ENGINE_VERSION // from the package's own package.json
-  const required = config.version
-
-  if (running === required) return
-
-  console.error(`
-✗ pluvian version mismatch
-  required: ${required} (from pluvian.json)
-  running:  ${running}
-
-  run: npx @erkos/pluvian@${required} check
-`)
-  process.exit(1)
+// src/version/config.ts (as shipped, abridged)
+export function enforceVersion<T extends { version?: string }>(
+  config: T,
+  running: string,
+): Result<T, EngineError> {
+  if (!config.version) return ok(config)       // no pin configured, proceed
+  if (config.version === running) return ok(config)
+  return err({ kind: 'VersionMismatch', required: config.version, running })
 }
+// renderError prints the exact fix: `run: npx @erkos/pluvian@<required> check`
 ```
+
+Since v2.1.0, embedders may pass `check(..., { enforcePin: false })` to
+run despite a mismatch and surface it themselves (the VS Code extension
+notifies and runs; CLI/CI keep refusing).
 
 This means:
 - The developer never needs to be manually notified when the platform
@@ -450,12 +448,12 @@ two mitigations exist, **neither required for v1**:
 
 ## Output formats
 
-The engine must support at minimum:
+The engine supports three shipped formats:
 - **Human-readable terminal output** (default) — colorized, points to
   file:line, includes `.message()` and `.rationale()` if present.
-- **JSON** (`--format json`) — for CI artifact storage and any future
-  tooling that consumes results programmatically.
-
-SARIF output (for GitHub/GitLab security-tab integration) is a
-reasonable v1.x addition but not required for the first working
-version.
+- **JSON** (`--format json`) — for CI artifact storage and tooling that
+  consumes results programmatically (frozen `schemaVersion: 1`).
+- **SARIF 2.1.0** (`--format sarif`) — shipped in v1.9.22: the OASIS
+  standard consumed by GitHub Code Scanning, GitLab security artifacts,
+  Azure DevOps, and VS Code's SARIF viewer; the CI templates ship
+  optional upload steps.
