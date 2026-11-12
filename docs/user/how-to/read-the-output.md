@@ -5,9 +5,9 @@
 ## Three output formats
 
 ```bash
-npx @erkos/pluvian check                      # terminal (default; human-readable)
-npx @pluvian check --format json               # machine-readable JSON
-npx @pluvian check --format sarif              # SARIF 2.1.0 for security dashboards
+npx @erkos/pluvian@2 check                      # terminal (default; human-readable)
+npx @erkos/pluvian@2 check --format json        # machine-readable JSON
+npx @erkos/pluvian@2 check --format sarif       # SARIF 2.1.0 for security dashboards
 ```
 
 ### Terminal (default)
