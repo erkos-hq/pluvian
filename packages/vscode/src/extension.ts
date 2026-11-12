@@ -20,6 +20,8 @@ function describeError(e: EngineError): string {
   switch (e.kind) {
     case 'ConfigNotFound':
       return `pluvian.json not found at ${e.path}`
+    case 'ConfigInvalid':
+      return `pluvian: invalid pluvian.json (${e.path}): ${e.detail}`
     case 'VersionMismatch':
       return `pluvian: spec pins engine ${e.required}, this extension bundles ${e.running}`
     case 'SpecLoadFailed':

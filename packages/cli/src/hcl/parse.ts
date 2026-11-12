@@ -184,8 +184,11 @@ async function parseDir(
   if (!fs.existsSync(dir)) return err({ kind: 'PathNotFound', path: dir })
   const out: ParsedFile[] = []
   for (const file of findTfFiles(dir)) {
-    const text = fs.readFileSync(file, 'utf8')
     try {
+      // The read rides inside the same guard as the parser: a vanished or
+      // unreadable .tf (TOCTOU/EACCES) is a ParseFailed, never a raw
+      // exception escaping the Result contract.
+      const text = fs.readFileSync(file, 'utf8')
       const parsed = (await hcl2json(path.basename(file), text)) as Hcl2JsonRoot
       out.push({ file, text, parsed })
     } catch (e) {

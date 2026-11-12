@@ -871,3 +871,19 @@ describe('check version pin (pluvian.json `version`)', () => {
     if (r.ok) expect(r.value.violations).toHaveLength(0)
   })
 })
+
+describe('check config loading (the railway’s first stage)', () => {
+  it('malformed pluvian.json returns ConfigInvalid, not a thrown SyntaxError', async () => {
+    // Pre-fix this rejected with a raw SyntaxError past the Result contract
+    // (silent unhandled rejection in the VS Code extension's run loop).
+    const r = await check(fixture('malformed-config'), '0.0.1')
+    expect(r.ok).toBe(false)
+    if (!r.ok) {
+      expect(r.error.kind).toBe('ConfigInvalid')
+      if (r.error.kind === 'ConfigInvalid') {
+        expect(r.error.path).toMatch(/malformed-config/)
+        expect(r.error.detail).toBeTruthy()
+      }
+    }
+  })
+})
