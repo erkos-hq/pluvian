@@ -31,6 +31,8 @@ Then read:
 - `docs/LESSONS.md` — **grep for the topic you're about to touch.** KEEP + AVOID entries; two-sided memory so wins don't rot and mistakes aren't repeated.
 - `docs/ROADMAP.md` — backlog + dogfood log
 
+**Repo shape:** two packages, both CI-gated, versions lockstep — `packages/cli` (the `@erkos/pluvian` engine, npm-published) and `packages/vscode` (the VS Code extension bundling that engine; VSIX packaging via `npm run package` + smoke via `npm run smoke`, both from `packages/vscode/`).
+
 Do this proactively on the first user message of a session — don't wait to be asked.
 
 ### Persistence mechanisms (already wired)
@@ -54,7 +56,7 @@ Safety net: if everyone forgets, the `memory.js` compaction plugin re-injects wh
 
 ### `/handoff` command
 
-Run `/handoff` (or tell the user to) when closing a session. The command (`.opencode/commands/handoff.md`) appends the SESSION_HANDOFF section, mines the session for any unrecorded LESSONS/DECISIONS entries, and tags WIP if work is unfinished. It does not commit — that stays an explicit user action.
+Run `/handoff` (or tell the user to) when closing a session. Two surfaces, same procedure: the opencode command (`.opencode/commands/handoff.md`) and the ZCode skill (`.agents/skills/handoff/SKILL.md`). Both append the SESSION_HANDOFF section (the skill mandates appending after the LAST LINE of the file — never anchor an edit on an existing session header), mine the session for unrecorded LESSONS/DECISIONS entries, and tag WIP if work is unfinished. Neither commits — that stays an explicit user action.
 
 ## graphify
 
