@@ -9,6 +9,15 @@ whether re-reading their spec is warranted.
 > Pre-2.0.0 entries below were published as `@dotzen/dotzen` — the same tool,
 > before the rebrand (see 2.0.0).
 
+## 2.2.1
+
+**Docs-only: corrected README on npm.** The 30-second-demo and Quick Start
+commands read `check ./terraform/` — but the CLI's positional argument is
+the **project root** (the directory containing `pluvian.json`), so that
+command failed with "pluvian config not found". The correct no-arg form
+(`npx @erkos/pluvian@2 check`, run from inside the project) now ships in
+the tarball README. No code changes; the engine is identical to 2.2.0.
+
 ## 2.2.0
 
 **Failure-track hardening (public API grows).** Operational failures now
