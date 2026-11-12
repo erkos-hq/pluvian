@@ -135,12 +135,15 @@ Full detail (including why WASM beats a native binary) in
    a monorepo — see §4). This is the single source of truth for which
    pluvian version applies. The engine refuses to run if its own version
    does not match `pluvian.json`'s `"version"` field, and prints the
-   exact `npx` command to fix it. **Never use `@latest` in any
-   automated context** (CI, pre-commit) — only for first-time manual
-   evaluation. See `/docs/specs/03-distribution-and-cli.md` §"Version
-   pinning" for the enforcement logic and why `@latest` is dangerous for
-   a governance tool specifically (silent behavior change, CI/local
-   drift, audit trail integrity).
+   exact `npx` command to fix it. (Since v2.1.0, embedders may pass
+   `check(..., { enforcePin: false })` — the VS Code extension notifies
+   and runs instead of refusing; CLI/CI keep refusing.) **Never use
+   `@latest` in any automated context** (CI, pre-commit) — only for
+   first-time manual evaluation. See
+   `/docs/specs/03-distribution-and-cli.md` §"Version pinning" for the
+   enforcement logic and why `@latest` is dangerous for a governance tool
+   specifically (silent behavior change, CI/local drift, audit trail
+   integrity).
 3. **The engine** — invisible to the spec author. Reads the validated
    rule objects, calls the WASM HCL parser (`@cdktf/hcl2json`, in-process),
    evaluates, emits violations with `block` / `warn` / `require_approval`
@@ -207,15 +210,14 @@ pluvian/
 ├── README.md
 ├── docs/
 │   ├── ROADMAP.md                     ← resource/check backlog (per-cloud)
+│   ├── SESSION_HANDOFF.md / LESSONS.md / DECISIONS.md   ← session memory (AGENTS.md)
+│   ├── user/                          ← tutorial + how-tos + DSL reference (+ generated rule catalog)
 │   └── specs/
-│       ├── 00-architecture-decision-record.md
-│       ├── 01-product-overview.md
-│       ├── 02-spec-dsl.md
-│       ├── 03-distribution-and-cli.md
-│       ├── 04-governance-model.md
-│       ├── 05-future-cloud-layer.md
-│       ├── 06-engine-architecture.md
-│       └── 07-development-workflow.md
+│       ├── 00-architecture-decision-record.md … 08-module-following.md
+│       ├── 10-graph-layer.md
+│       └── 11-vscode-extension.md
+├── demo/                              ← the demo project (pluvian.json + one graph rule)
+├── examples/                          ← org-profile spec templates (startup/enterprise/regulated)
 ├── .github/workflows/ci.yml             ← quality/security gate (GitHub Actions)
 ├── renovate.json                      ← npm + CI-image update automation
 ├── .claude/
@@ -228,26 +230,30 @@ pluvian/
 │       ├── code-quality.md
 │       └── security-scan.md
 └── packages/
-    └── cli/                           ← the npm package, `bin/pluvian.js`
-        ├── package.json
-        ├── tsconfig.json / tsconfig.build.json / vitest.config.ts / eslint.config.js
-        ├── bin/                       ← pluvian.js launcher
-        ├── src/
-        │   ├── index.ts               ← public DSL surface (barrel)
-        │   ├── cli/                   ← arg parsing, check pipeline, init scaffold
-        │   ├── engine/                ← evaluation + exhaustive condition dispatch
-        │   ├── hcl/                   ← @cdktf/hcl2json adapter, normalize, model
-        │   ├── report/                ← terminal (ANSI) + JSON output
-        │   ├── result/                ← Result<T,E> ROP combinators + errors
-        │   ├── spec/                  ← RuleBuilder + spec loader (jiti)
-        │   ├── version/               ← pluvian.json enforcement
-        │   └── vocabulary/            ← per-provider enums: index(aws)+azure+gcp
-        ├── tests/                     ← integration (end-to-end) + fixtures
-        └── examples/
-            └── ai-generated/          ← the AI-generated multi-cloud corpus
-                ├── .pluvian/spec.ts
-                ├── pluvian.json
-                └── terraform/         ← AWS + Azure + GCP fixtures
+    ├── cli/                           ← the npm package @erkos/pluvian, `bin/pluvian.js`
+    │   ├── package.json
+    │   ├── tsconfig.json / tsconfig.build.json / vitest.config.ts / eslint.config.js
+    │   ├── bin/                       ← pluvian.js launcher
+    │   ├── src/
+    │   │   ├── index.ts               ← public surface: DSL barrel + engine API (check, types)
+    │   │   ├── cli/                   ← arg parsing, check pipeline, init scaffold, profiles
+    │   │   ├── engine/                ← evaluation + exhaustive condition dispatch + graph layer
+    │   │   ├── hcl/                   ← @cdktf/hcl2json adapter, normalize, model
+    │   │   ├── report/                ← terminal (ANSI) + JSON + SARIF output
+    │   │   ├── result/                ← Result<T,E> ROP combinators + errors
+    │   │   ├── spec/                  ← RuleBuilder + spec loader (jiti)
+    │   │   ├── version/               ← pluvian.json enforcement
+    │   │   └── vocabulary/            ← per-provider enums: aws+azure+gcp+data
+    │   ├── tests/                     ← integration (end-to-end) + fixtures
+    │   └── examples/
+    │       └── ai-generated/          ← the AI-generated multi-cloud corpus
+    │           ├── .pluvian/spec.ts
+    │           ├── pluvian.json
+    │           └── terraform/         ← AWS + Azure + GCP fixtures
+    └── vscode/                        ← VS Code extension (spec 11): in-editor diagnostics
+        ├── src/                       ← extension.ts glue + pure diagnostics/engine-bridge/debounce
+        ├── esbuild.js                 ← bundles glue only; engine ships as real files
+        └── scripts/package.mjs        ← staged-closure VSIX packaging + smoke.mjs gate
 
 # NOT present, by design:
 #  - packages/hclparse/ (Go module): SKIPPED per ADR §2a — the pure-JS
@@ -256,12 +262,15 @@ pluvian/
 #    under packages/cli/examples/ai-generated/ instead.
 ```
 
-The engine in `packages/cli/` is shipped (v1.9.x), not a vertical slice:
+The engine in `packages/cli/` is shipped (v2.2.0), not a vertical slice:
 the full ROP pipeline (version → spec-load via jiti → parse via
-`@cdktf/hcl2json` WASM → normalize → evaluate → report) with **42
+`@cdktf/hcl2json` WASM → normalize → evaluate → report) with **42+
 structurally different conditions** — including the v1.9.26–29 graph-layer
 conditions (`denyIfReachable` / `denyIfSharedWith` / `denyIfReachableAttr`)
-— across AWS, Azure, and GCP (~3,200 recognized types).
+— across AWS, Azure, and GCP (~3,200 recognized types). Since v2.1.0 the
+package index also exports the **engine API** (`check`, `CheckReport` /
+finding types, `readEngineConfig`) so embedders run the identical engine
+in-process — first consumer: `packages/vscode` (spec 11).
 
 **Authoritative condition catalog** (the inline list that used to live here
 was illustrative and rotted between releases; trust these instead):
@@ -296,15 +305,16 @@ isolated var/local scope. A `pluvian init` scaffolding command detects
 existing Terraform (incl. multi-root layouts) and writes a version-pinned
 `pluvian.json` + `.pluvian/spec.ts`.
 
-Not built yet (see `docs/ROADMAP.md`):
-`data.aws_iam_policy_document`, service-scoped IAM wildcards (deliberately
-not flagged — to avoid false positives), ECS plaintext env secrets (more
-shapes), more resource/attribute vocabulary, resource-level
-`count`/`for_each`, function-wrapped collections (`toset(...)`/`each.*`),
-`.tfvars`, and — for module-following (doc 08) — remote (registry/git)
-sources. The `docs/specs` and `.claude` content remains the authoritative
-design; treat anything beyond the shipped slice as not yet written unless
-you find it.
+Genuinely not built yet (see `docs/ROADMAP.md` for the living list):
+`.tfvars` handling, recursive `flatten()` and further Terraform built-ins
+(`keys()`/`values()`/`length()`), OCI/Oracle-class clouds. Most items that
+used to be listed here shipped during the v1.7–v1.9 era
+(`data.aws_iam_policy_document` resolution, resource-level
+`count`/`for_each` expansion, `toset()`/`concat()`/`flatten()` modeling,
+remote module sources surfacing honestly as `pluvian.module-following`
+could-not-evaluate). The `docs/specs` and `.claude` content remains the
+authoritative design; treat anything beyond the shipped slice as not yet
+written unless you find it.
 
 ## 8. Working conventions for this repo
 
@@ -341,13 +351,15 @@ quality/security gate. Full detail in
     after a change; a check that could not run counts as a failure, never
     a silent pass; a feature is not done until all three PASS.
   - **CI** (`.github/workflows/ci.yml`, GitHub Actions): the non-bypassable
-    gate on push/PR (Node 24). Update automation via Renovate
+    gate on push/PR (Node 26; jobs: test, audit, semgrep, gitleaks,
+    vscode + CodeQL). Update automation via Renovate
     (`renovate.json`), not Dependabot.
 - **Tools** (all dev/CI only — never shipped in the npm package, so a
   native dev tool does not breach the "stay pure-JS" distribution
   boundary): Vitest (+coverage), `tsc --noEmit`, ESLint
-  (+eslint-plugin-security), Prettier, Semgrep, gitleaks, npm audit,
-  osv-scanner.
+  (+typescript-eslint), Prettier, Semgrep, gitleaks, npm audit, CodeQL;
+  the `vscode` job adds esbuild + `vsce package` + a smoke run of the
+  bundled engine against `demo/`.
 - **Definition of Done:** written test-first; all three subagents PASS;
   CI green; any new rule condition/resource type ships its violating +
   passing fixtures.
