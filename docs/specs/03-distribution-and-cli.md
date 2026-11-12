@@ -9,7 +9,7 @@ distribution model was chosen over every alternative.
 ## The invocation contract
 
 ```bash
-npx @erkos/pluvian check ./terraform/
+npx @erkos/pluvian@2 check
 ```
 
 This is the only command a developer or a CI pipeline needs to know.
@@ -388,7 +388,7 @@ complexity for v1.
 pluvian-check:
   stage: validate
   script:
-    - npx @erkos/pluvian check ./terraform/
+    - npx @erkos/pluvian@2 check
   rules:
     - changes:
         - "terraform/**/*.tf"
@@ -403,7 +403,7 @@ step required. `pluvian` reads its version from the committed
 
 ```yaml
 - name: Governance check
-  run: npx @erkos/pluvian check ./terraform/
+  run: npx @erkos/pluvian@2 check
 ```
 
 Node is pre-installed on `ubuntu-latest`, `macos-latest`, and

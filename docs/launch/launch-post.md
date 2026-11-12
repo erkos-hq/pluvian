@@ -25,7 +25,7 @@ agent writes Terraform, runs `npx @erkos/pluvian@1 check`, reads the findings,
 and fixes them before it ever opens a PR. Fail at the cheapest gate, not at plan
 or in prod.
 
-    npx @erkos/pluvian@1 check ./terraform/
+    npx @erkos/pluvian@2 check
 
 Three things make it different from the OPA/Sentinel/Checkov/tfsec lineup:
 
@@ -91,7 +91,7 @@ writes the HCL directly.
 
 I open-sourced a static governance tool for this — pluvian. Run it with no install:
 
-    npx @erkos/pluvian@1 check ./terraform/
+    npx @erkos/pluvian@2 check
 
 What it does that's a bit different:
 
