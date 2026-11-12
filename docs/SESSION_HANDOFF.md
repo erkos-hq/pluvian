@@ -231,3 +231,27 @@ Then read `docs/ROADMAP.md` (remaining items + dogfood log) + this file (session
 **Next resume step:**
 - `npm run context` from `packages/cli/`; pick between launch post (P3-pairing recommended: publish the VSIX, then post) or VS Code P2. Engine/CI/ruleset current; nothing mid-flight (no WIP tag — clean tree; this section + the DECISIONS line below are uncommitted by design, per `/handoff`).
 
+
+## Session N+9 — 2026-11-12 — consolidated: Sep–Nov maintenance + v2.2.0 + charax design sprint
+
+**Goal:** (consolidated — four working sessions since N+8 ended without handoff sections; reconstructed from git log #23–#38. LESSONS entry appended about exactly this.)
+
+**Shipped:**
+- **Audit clears ×2:** Sept (#24: qs override 6.16.0 itself entered the advisory range → 6.17.1 both manifests, vitest 4.1.12; the September no-fix `braces` advisory cleared upstream) and Oct (#27, same playbook). Both packages audit 0; `vscode` CI job still has no audit step (fine while clean).
+- **Renovate majors via dashboard (#2):** #29 Node 26 (ci + release runners; **trusted publishing + SLSA provenance verified live on Node 26 at v2.2.0** — the old Node-pin worry is closed), #30 dev-dep majors (vitest 5, Stryker 10, @types/node 26, vsce 4) + **package.mjs hoisting fix** (staged closure now resolves deps from packages/cli/dist instead of assuming flat node_modules — LESSONS "hoisting is not a contract").
+- **TS 7 recheck (#32):** GA since Jul 2026 but no compiler API → typescript-eslint cannot support (#12518); Renovate block stays; recheck on tsgolint news. DECISIONS updated.
+- **ROP review + fix (#35):** two escaped exceptions closed — `ConfigInvalid {path, detail}` EngineError variant (malformed/unreadable pluvian.json) + `parseDir` readFileSync moved inside the guard (TOCTOU → ParseFailed). tsc exhaustiveness found two consumers the analysis missed (report.ts renderError, extension describeError). First direct unit coverage of readEngineConfig; config.ts line coverage 42→71%.
+- **v2.2.0 RELEASED (#36, tag `v2.2.0`):** npm latest 2.2.0, SLSA provenance verified; smoke.mjs now derives the VSIX name from package.json (hardcoded `pluvian-2.1.0.vsix` broke on the first bump — LESSONS). Release lessons in #37.
+- **npm registry hygiene:** `2.0.0-rc.1` deprecated with pointer + stale `next` dist-tag removed (user ran with OTP; this shell cannot complete 2FA).
+- **Docs sweep (#38):** two `npx @pluvian` rebrand leftovers fixed in `read-the-output.md`; ROADMAP at-a-glance refreshed (822+45 tests, public library + extension noted).
+- **charax design sprint (no repo changes — advisory):** naming screened (npm/GitHub/common-law): finalists **charax** (χάραξ, palisade stake; χαρακτήρ "the identifying stamp" etymology; pluvian-grade clean) and **pylae** (πύλαι, gates); `kleido` killed by Kaleido.io (IAM-adjacent phonetic twin) + Arm Kleidi. Recommendation: **fort route** (erkos scene absorbs the animals; enterprise identity buyers; systematic namespace) over animal route; **not locked — user holding**. Capability map sketched: escalation detection = stateful reachability + technique catalogs as presets; dataset flywheel (engine-as-oracle over synthetic identity graphs); agentic scope-creep = the white space. DSL verdict: keep fluent interface for both tools (preserve sugar→IR boundary for charax; fix per-resource narrowing someday); ROP verdict: right choice, keep for charax.
+
+**Deferred / blocked:**
+- **VS Code P3** — user must create Marketplace publisher + Open VSX account (+ VSCE_PAT/OVSX secrets); then publish pipeline, final marketplace id (manifest `pluvian-vscode`/`erkos`), icon/README; a 2.2.0 VSIX is already buildable via `npm run package`.
+- **Launch post** (`docs/launch/launch-post.md`) — pair with P3.
+- VS Code P2 (ignore Quick Fix, multi-root).
+- N+3 leftovers still open: README trust-boundary note, C0/C1 strip in `makePaint` (`packages/cli/src/report/report.ts`), stale `wip-2026-08-18-1540` tag.
+- charax: name decision + `@erkos/charax` npm reservation — user holding; trademark filing (classes 9+42) and erkos.dev still optional open threads.
+
+**Next resume step:**
+- `npm run context` from `packages/cli/`; the user-side blockers are the P3 accounts (Marketplace + Open VSX) — everything code-side is ready. If charax name gets locked instead: reserve scope, DECISIONS entry, then design doc (IR first, builder second).

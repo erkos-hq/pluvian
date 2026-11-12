@@ -193,3 +193,11 @@ REST update verbs — the rulesets API is PUT-based.
 
 **AVOID** (don't repeat):
 - Hardcoding version strings in scripts — smoke.mjs's `pluvian-2.1.0.vsix` broke on the first bump; the lockstep test only guards package-to-package versions, not strings baked into scripts. Derive from package.json.
+
+## 2026-11-12 — process — handoff sections skipped across four sessions
+
+**KEEP** (do again):
+- The `/handoff` skill port (2026-09-03) made this pass mechanical — run it when a working session ends, even chat-heavy ones that shipped PRs.
+
+**AVOID** (don't repeat):
+- Ending working sessions without appending the SESSION_HANDOFF section — N+9 had to reconstruct four sessions (Sep 16 → Nov 12) from `git log` + conversation memory. The rolling log's value decays with every skipped session; a two-line stub per session beats a reconstructed epic.
