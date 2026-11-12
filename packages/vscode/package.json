@@ -2,7 +2,7 @@
   "name": "pluvian-vscode",
   "displayName": "pluvian",
   "description": "In-editor pluvian findings for Terraform — the same engine, spec, and verdicts as the CLI, as you save.",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "license": "MIT",
   "publisher": "erkos",

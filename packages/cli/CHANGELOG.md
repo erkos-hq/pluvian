@@ -9,6 +9,36 @@ whether re-reading their spec is warranted.
 > Pre-2.0.0 entries below were published as `@dotzen/dotzen` — the same tool,
 > before the rebrand (see 2.0.0).
 
+## 2.2.0
+
+**Failure-track hardening (public API grows).** Operational failures now
+always ride the `Result` failure track — no raw exceptions escape the
+engine. Follow-up to the railway-oriented-architecture review.
+
+### Added
+
+- New `EngineError` variant `ConfigInvalid { path, detail }` — a malformed
+  or unreadable `pluvian.json` (bad JSON, permission error, race) is a
+  typed error with a clean message instead of a raw `SyntaxError` with a
+  stack trace. Consumers doing exhaustive `switch` on `EngineError` get a
+  compile error until they handle it — by design.
+- `readEngineConfig` has direct unit coverage for the first time (both
+  candidate paths, precedence, malformed JSON, unreadable file).
+
+### Fixed
+
+- An unreadable `.tf` file mid-scan (deleted between discovery and read,
+  permission error) now maps to `ParseFailed` instead of crashing the run.
+- In the VS Code extension, both failure modes previously surfaced as a
+  silent unhandled rejection (status bar stuck); both now render a proper
+  message.
+
+### Unchanged
+
+- Verdicts, rule catalog, presets, and CLI behavior are untouched. Dev
+  toolchain majors landed since 2.1.0 (vitest 5, Stryker 10, Node 26 CI)
+  have no runtime footprint in the published package.
+
 ## 2.1.0
 
 **Public engine API.** `check` (and its report/finding types) is now exported

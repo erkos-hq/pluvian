@@ -5,11 +5,16 @@
 import { spawnSync } from 'node:child_process'
 import { createRequire } from 'node:module'
 import * as path from 'node:path'
-import { rmSync } from 'node:fs'
+import { readFileSync, rmSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 const pkgRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
-const vsix = path.join(pkgRoot, 'pluvian-2.1.0.vsix')
+// Derive the artifact name from the manifest — a hardcoded version string
+// here broke the first version bump (2.2.0) after the script was written.
+const pkgVersion = JSON.parse(
+  readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'),
+).version
+const vsix = path.join(pkgRoot, `pluvian-${pkgVersion}.vsix`)
 const tmp = path.join(pkgRoot, '.smoke-tmp')
 
 const die = (msg) => {
