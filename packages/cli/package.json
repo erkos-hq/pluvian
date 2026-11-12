@@ -1,6 +1,6 @@
 {
   "name": "@erkos/pluvian",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Prose as Code — governance for AI-generated Terraform (AWS, Azure, GCP).",
   "license": "MIT",
   "keywords": [
