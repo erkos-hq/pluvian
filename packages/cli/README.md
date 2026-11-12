@@ -5,7 +5,7 @@
 _pluvian — the crocodile bird: the little bird that cleans the beast's teeth. An [erkos](https://erkos.dev) tool — we clean your AI's Terraform._
 
 ```bash
-npx @erkos/pluvian@2 check ./terraform/
+npx @erkos/pluvian@2 check
 ```
 
 ![pluvian flagging an EFS mount target placed in a public subnet](https://raw.githubusercontent.com/erkos-hq/pluvian/main/docs/assets/demo.gif)
@@ -134,7 +134,7 @@ never blocked in the first place.
 Point pluvian at any Terraform project that has a `.pluvian/spec.ts`:
 
 ```bash
-npx @erkos/pluvian@2 check ./terraform/
+npx @erkos/pluvian@2 check
 ```
 
 ```

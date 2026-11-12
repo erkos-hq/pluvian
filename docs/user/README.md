@@ -3,7 +3,7 @@
 **Governance-as-code for Terraform.** Statically analyze your `.tf` (HCL) against a readable TypeScript rule spec — across AWS, Azure, and GCP — before `terraform plan`. Zero-install (`npx`), static-only (no credentials, no plan), honest (no guessing — reports "could not evaluate" rather than false positives).
 
 ```bash
-npx @erkos/pluvian check ./terraform/
+npx @erkos/pluvian@2 check
 ```
 
 ## Start here

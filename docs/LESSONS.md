@@ -201,3 +201,11 @@ REST update verbs — the rulesets API is PUT-based.
 
 **AVOID** (don't repeat):
 - Ending working sessions without appending the SESSION_HANDOFF section — N+9 had to reconstruct four sessions (Sep 16 → Nov 12) from `git log` + conversation memory. The rolling log's value decays with every skipped session; a two-line stub per session beats a reconstructed epic.
+
+## 2026-11-12 — docs — the README hero command was broken for ~3 months
+
+**KEEP** (do again):
+- Verify copy-paste commands by RUNNING them against a real fixture (`node packages/cli/bin/pluvian.js check …` in `demo/`) — the user caught `check ./terraform/` failing with `pluvian config not found` in the README hero; the v1.9.35 README verification checked rendering and ordering, never execution.
+
+**AVOID** (don't repeat):
+- Writing `check <path>` examples from memory of the intended UX — the CLI positional is the PROJECT ROOT (where pluvian.json lives), not a Terraform path; `init`'s own output, the tutorial, and the demo tape all correctly use the no-arg form. Grep the tree for a command shape before enshrining it in the hero.

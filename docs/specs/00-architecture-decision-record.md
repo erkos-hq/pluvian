@@ -56,7 +56,7 @@ kind — a package-manager install, a `curl | sh` script, or a runtime
 that itself needs installing first. **Node.js is the one runtime that is
 already present on essentially every developer machine and every major
 CI runner (GitHub Actions, GitLab CI, CircleCI, Jenkins) without any
-setup step.** `npx @erkos/pluvian check ./terraform/` is a complete,
+setup step.** `npx @erkos/pluvian@2 check` is a complete,
 zero-install, cross-platform invocation on day one.
 
 This single property — "the adoption flywheel requires zero

@@ -126,7 +126,7 @@ stages: [governance, plan, approval, apply]
 pluvian-check:
   stage: governance
   script:
-    - npx @erkos/pluvian check ./terraform/ --format json > pluvian-report.json
+    - npx @erkos/pluvian@2 check --format json > pluvian-report.json
   artifacts:
     paths: [pluvian-report.json]
     expire_in: 90 days
@@ -181,7 +181,7 @@ pipeline:
 governance-check:
   stage: check
   script:
-    - npx @erkos/pluvian check ./terraform/   # writes pluvian.env
+    - npx @erkos/pluvian@2 check   # writes pluvian.env
   artifacts:
     reports:
       dotenv: pluvian.env                       # exposes PLUVIAN_REQUIRES_APPROVAL

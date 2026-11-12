@@ -7,7 +7,7 @@
 **pluvian is governance-as-code for Terraform.** It statically analyzes your `.tf` files (HCL) against a readable, strongly-typed rule spec written in TypeScript (`.pluvian/spec.ts`) and reports security, tagging, and compliance violations — **before** `terraform plan` or `apply`. It is designed for the world where AI code-generation tools produce Terraform that compiles but quietly violates your organization's policies.
 
 ```bash
-npx @erkos/pluvian check ./terraform/
+npx @erkos/pluvian@2 check
 ```
 
 Three design commitments shape everything below:

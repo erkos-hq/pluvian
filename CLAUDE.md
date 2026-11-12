@@ -46,7 +46,7 @@ adoption friction) has not changed.
 ┌─────────────────────────────────────────────────────────┐
 │  DEVELOPER MACHINE / CI RUNNER                           │
 │                                                           │
-│  npx @erkos/pluvian check ./terraform/                    │
+│  npx @erkos/pluvian@2 check                    │
 │         │                                                 │
 │         ▼                                                 │
 │  ┌───────────────────────────┐                            │
