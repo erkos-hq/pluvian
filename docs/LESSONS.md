@@ -184,3 +184,12 @@ REST update verbs — the rulesets API is PUT-based.
 
 **AVOID** (don't repeat):
 - Building `node_modules` copy paths from a dev machine's layout — hoisting is not a contract. The dev-deps majors re-nested `fs-extra` under `@cdktf/hcl2json` (both locally and on CI), and the path-built copy ENOENT'd only after the bump.
+
+## 2026-11-12 — release — v2.2.0: Node 26 publish verified + version-string gotcha
+
+**KEEP** (do again):
+- Trusted publishing + provenance WORKS on the Node 26/npm 12 runner (v2.2.0, SLSA provenance signed to the sigstore log) — the Node-24-pin concern from the majors bump is closed.
+- `npm view` can 404 for ~2 minutes AFTER a successful publish ("being processed"). Read the publish job log first (`+ @erkos/pluvian@X` + the provenance line) before diagnosing a silent failure.
+
+**AVOID** (don't repeat):
+- Hardcoding version strings in scripts — smoke.mjs's `pluvian-2.1.0.vsix` broke on the first bump; the lockstep test only guards package-to-package versions, not strings baked into scripts. Derive from package.json.
