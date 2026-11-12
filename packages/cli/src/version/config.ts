@@ -31,8 +31,19 @@ export function readEngineConfig(
   for (const rel of CANDIDATES) {
     const p = path.join(cwd, rel)
     if (fs.existsSync(p)) {
-      const parsed = JSON.parse(fs.readFileSync(p, 'utf8')) as EngineConfig
-      return ok({ config: parsed, baseDir: path.dirname(p) })
+      // The railway starts here — a malformed or unreadable pluvian.json
+      // must ride the Err track like every other operational failure, not
+      // escape as a raw SyntaxError/ENOENT past the Result contract.
+      try {
+        const parsed = JSON.parse(fs.readFileSync(p, 'utf8')) as EngineConfig
+        return ok({ config: parsed, baseDir: path.dirname(p) })
+      } catch (e) {
+        return err({
+          kind: 'ConfigInvalid',
+          path: p,
+          detail: e instanceof Error ? e.message : String(e),
+        })
+      }
     }
   }
   return err({ kind: 'ConfigNotFound', path: path.join(cwd, 'pluvian.json') })

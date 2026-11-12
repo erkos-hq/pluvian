@@ -344,6 +344,8 @@ export function renderError(error: EngineError): string {
   switch (error.kind) {
     case 'ConfigNotFound':
       return `✗ pluvian config not found: ${error.path}`
+    case 'ConfigInvalid':
+      return `✗ invalid pluvian config ${error.path}: ${error.detail}`
     case 'VersionMismatch':
       return [
         `✗ pluvian version mismatch`,

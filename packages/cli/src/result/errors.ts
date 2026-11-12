@@ -8,6 +8,11 @@ export interface RuleValidationError {
 export type EngineError =
   | { readonly kind: 'ConfigNotFound'; readonly path: string }
   | {
+      readonly kind: 'ConfigInvalid'
+      readonly path: string
+      readonly detail: string
+    }
+  | {
       readonly kind: 'VersionMismatch'
       readonly required: string
       readonly running: string
