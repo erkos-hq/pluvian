@@ -30,7 +30,7 @@ readEngineConfig ─► enforceVersion ─► loadSpec ─┐
   resource model (see "The normalized resource model" below).
 - **evaluate** — run every rule against the normalized model, producing
   a `CheckReport`.
-- **report** — render the `CheckReport` as terminal or JSON output.
+- **report** — render the `CheckReport` as terminal, JSON, or SARIF output.
 
 ## Railway Oriented Programming — the model and its hard rules
 
@@ -115,24 +115,33 @@ benefit sought for resource types — see `02-spec-dsl.md`):
 
 ```
 type EngineError =
-  | { kind: 'VersionMismatch'; required: string; running: string }
   | { kind: 'ConfigNotFound';  path: string }
+  | { kind: 'ConfigInvalid';   path: string; detail: string }
+  | { kind: 'VersionMismatch'; required: string; running: string }
+  | { kind: 'SpecLoadFailed';  path: string; detail: string }
   | { kind: 'SpecInvalid';     errors: RuleValidationError[] }
-  | { kind: 'ParseFailed';     file: string; detail: string }
   | { kind: 'PathNotFound';    path: string }
+  | { kind: 'ParseFailed';     file: string; detail: string }
 ```
+
+(`ConfigInvalid` — malformed or unreadable `pluvian.json` — was added in
+v2.2.0: the railway's first stage used to leak a raw `SyntaxError` past
+the `Result` contract. The compiler surfaced every consumer that had to
+handle the new variant — the exhaustiveness discipline working as
+designed.)
 
 Extend by adding a variant and letting the compiler surface every place
 that must handle it.
 
 ### Result implementation — library choice
 
-Recommended: **neverthrow** (lightweight, `Result`-focused, provides
-`.map`/`.andThen`/`.combineWithAllErrors` and `safeTry` to avoid deep
-nesting, since TypeScript has no do-notation). A **hand-rolled
-`Result<T, E>`** (~30–40 lines, zero dependencies) is an equally valid,
-in-character choice that aligns with the "stay pure-JS, minimal
-dependencies" boundary in `00-architecture-decision-record.md`.
+**As shipped: the hand-rolled option** — `src/result/result.ts` (~40
+lines, zero dependencies), which is what the appendix sketch shows. The
+original recommendation (**neverthrow** — lightweight, `Result`-focused,
+`.map`/`.andThen`/`combineWithAllErrors` + `safeTry`) remains a valid
+alternative if the combinators ever outgrow the hand-rolled set; it was
+not needed. Both align with the "stay pure-JS, minimal dependencies"
+boundary in `00-architecture-decision-record.md`.
 
 **Do not use fp-ts.** Its learning curve makes the engine unreadable to
 casual contributors, which works directly against the ADR's
@@ -196,7 +205,7 @@ packages/cli/
     │                        kind (deny-ingress, must-have-attr, must-have-
     │                        tags, deny-acl…), so adding a condition adds
     │                        one evaluator rather than editing a monolith
-    ├── report/            ← CheckReport / EngineError → terminal | JSON
+    ├── report/            ← CheckReport / EngineError → terminal | JSON | SARIF
     ├── version/           ← pluvian.json read + enforcement
     └── result/            ← Result<T,E> + EngineError (if hand-rolled)
 ```
@@ -290,8 +299,10 @@ export const andThen: <T, U, E>(r: Result<T, E>, f: (t: T) => Result<U, E>) => R
 export const combineWithAllErrors: <T, E>(rs: Result<T, E>[]) => Result<T[], E[]>
 
 // The failure track. Operational failures ONLY (Rule 1). Never violations.
+// (ConfigInvalid — malformed/unreadable pluvian.json — added in v2.2.0.)
 export type EngineError =
   | { kind: 'ConfigNotFound';  path: string }
+  | { kind: 'ConfigInvalid';   path: string; detail: string }
   | { kind: 'VersionMismatch'; required: string; running: string }
   | { kind: 'SpecLoadFailed';  path: string; detail: string }
   | { kind: 'SpecInvalid';     errors: RuleValidationError[] }  // accumulated
@@ -513,6 +524,14 @@ export function check(cwd: string): Result<CheckReport, EngineError> {
 `evaluate` because it cannot fail; the accumulating fold lives *inside*
 `loadSpec`. The `main` wrapper then runs `check(cwd)` → on `Ok`, render +
 `reportExitCode`; on `Err`, `renderError` + exit `2`.
+
+As shipped (v2.1.0+), `check` is exported from the package index as the
+public engine API and takes
+`check(projectRoot, engineVersion, opts?: { enforcePin?: boolean })` —
+`enforcePin: false` lets embedders (the VS Code extension) run despite a
+pin mismatch and surface it themselves; CLI/CI keep refusing. The real
+pipeline is written imperatively (async stages with threaded locals) —
+same railway, spelled with early returns.
 
 ### Two intentional refinements over earlier docs
 

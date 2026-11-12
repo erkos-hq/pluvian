@@ -83,11 +83,12 @@ the "stay pure-JS" *distribution* boundary in
 | Unit + integration tests | **Vitest** | any failure blocks |
 | Coverage | **Vitest** (v8) | below threshold blocks |
 | Types | **`tsc --noEmit`** (strict) | any error blocks |
-| Lint | **ESLint** (typescript-eslint + eslint-plugin-security) | any error blocks |
+| Lint | **ESLint** (typescript-eslint) | any error blocks |
 | Format | **Prettier** (`--check`) | drift blocks |
-| SAST | **Semgrep** (`--config auto`) | high/error blocks |
+| SAST | **Semgrep** (`--config auto`) + **CodeQL** (separate workflow) | high/error blocks |
 | Secrets | **gitleaks** | any finding blocks |
 | Dependency / supply chain | **npm audit** (`--audit-level=high`) + **Renovate** | high/critical blocks |
+| Extension packaging | **esbuild + vsce** (staged VSIX) + bundled-engine smoke (`vscode` job) | any failure blocks |
 
 `tsc --noEmit` also serves as the spec type-check the loader cannot do —
 see `06-engine-architecture.md` §"Spec loading."
@@ -100,7 +101,8 @@ work is considered done:
 
 - **`test-runner`** — Vitest unit + integration + coverage.
 - **`code-quality`** — `tsc --noEmit`, ESLint, Prettier.
-- **`security-scan`** — Semgrep, gitleaks, npm audit + osv-scanner.
+- **`security-scan`** — Semgrep, gitleaks, npm audit (osv-scanner was
+  evaluated and dropped — see the note under "CI gate").
 
 Rules for the orchestrating (main) agent:
 
@@ -129,16 +131,18 @@ A change is done only when **all** hold:
 ## CI gate (GitHub Actions)
 
 The non-bypassable gate mirrors the subagents exactly, on `ubuntu-latest`
-(Node 24). The engine is cross-platform by construction — pure JS + the WASM
+(Node 26). The engine is cross-platform by construction — pure JS + the WASM
 HCL parser, no native binary — so Linux-only CI is sufficient (no per-OS
 matrix; see `03-distribution-and-cli.md` §"Cross-platform implementation
-notes"). The live pipeline is `.github/workflows/ci.yml`:
+notes"). The live pipeline is `.github/workflows/ci.yml` (plus
+`codeql.yml`; the repo ruleset makes `test`, `audit`, `semgrep`,
+`gitleaks`, and `vscode` required checks on main):
 
 ```yaml
 # .github/workflows/ci.yml (abridged — see the file for the full version)
 name: ci
 on:
-  push: { branches: [main], tags: ['v*'] }
+  push: { branches: [main] }   # NOT on tags — release.yml owns those
   pull_request:
 
 jobs:
@@ -146,9 +150,9 @@ jobs:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: packages/cli } }
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with: { node-version: '24', cache: npm, cache-dependency-path: packages/cli/package-lock.json }
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: '26', cache: npm, cache-dependency-path: packages/cli/package-lock.json }
       - run: npm install --no-audit --no-fund
       - run: npm run typecheck
       - run: npm run lint
@@ -158,13 +162,21 @@ jobs:
       - run: npm run coverage
       - run: npm run check-docs      # rule-doc freshness
 
+  # The extension package's gate: installs + builds the engine package
+  # first (the file: link resolves its deps and types from packages/cli),
+  # then typecheck/lint/format/test, staged `vsce package`, and a smoke
+  # run of the BUNDLED engine against demo/ from the extracted VSIX.
+  vscode:
+    steps: [checkout, setup-node, cli npm install + build, vscode gates + package + smoke]  # abridged
+
   # Cross-OS parity (Windows/macOS) is a free native matrix on a public repo;
   # add `strategy: matrix: os: [ubuntu-latest, macos-latest, windows-latest]`
   # if/when parity is wanted. Currently Linux-only.
 
   audit:    { runs-on: ubuntu-latest, steps: [checkout, setup-node, npm install, npm audit --audit-level=high] }   # abridged
   semgrep:  { runs-on: ubuntu-latest, steps: [checkout, pipx install semgrep, semgrep scan --config auto --error packages/cli/src] }  # abridged
-  gitleaks: { runs-on: ubuntu-latest, steps: [checkout (fetch-depth 0), gitleaks/gitleaks-action@v2] }  # abridged
+  gitleaks: { runs-on: ubuntu-latest, steps: [checkout (fetch-depth 0), direct checksum-pinned gitleaks binary] }  # abridged — the
+            # gitleaks-action requires a per-org license since the erkos-hq transfer
 ```
 
 `actions/setup-node` provides Node + an npm cache; dependency install is the
