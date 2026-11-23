@@ -21,6 +21,7 @@ Use-case recipes for spec authors and security reviewers:
 - [Handle exceptions](./how-to/handle-exceptions.md) — suppress a finding on a resource, with a reason.
 - [Understand "could not evaluate"](./how-to/understand-could-not-evaluate.md) — the #1 confusion point, demystified.
 - [Read the output](./how-to/read-the-output.md) — terminal / JSON / SARIF, exit codes, GitHub Security tab.
+- [Use the VS Code extension](./how-to/use-the-extension.md) — squiggles while you write; same engine, same spec, same verdicts.
 
 ## Reference
 

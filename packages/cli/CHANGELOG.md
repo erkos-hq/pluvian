@@ -9,6 +9,21 @@ whether re-reading their spec is warranted.
 > Pre-2.0.0 entries below were published as `@dotzen/dotzen` — the same tool,
 > before the rebrand (see 2.0.0).
 
+## 2.3.0
+
+**Extension: multi-root + nested project discovery (spec 11 P2).** The
+extension now finds pluvian projects in two layouts: each workspace folder
+that is itself a project (multi-root workspaces), and pluvian projects
+nested under an opened parent folder — the "I opened the folder that
+contains my projects" case. Each project checks independently (isolated
+`var`/`local` scope, exactly like the CLI's multiple roots) with findings
+aggregated in one Problems panel, one status bar, and a per-project report
+in the output channel. Activation now also fires for nested configs
+(`workspaceContains:**/pluvian.json`); one project failing operationally no
+longer blanks the others' diagnostics. Discovery is a pure, unit-tested
+module with depth/dir bounds (`node_modules` and friends never scanned).
+Dormant message updated accordingly. Engine, CLI, and verdicts unchanged.
+
 ## 2.2.4
 
 **Extension-only: Marketplace builds now ship the engine.** The 2.2.2 and
