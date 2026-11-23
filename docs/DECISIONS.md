@@ -60,3 +60,9 @@ Choice: unscoped manifest name `pluvian-vscode`, publisher `erkos` (id `erkos.pl
 
 ## 2026-11-06 — deps — typescript major stays Renovate-blocked (rechecked)
 Choice: keep `enabled: false` on the typescript major. Why: TS 7 (Go compiler) GA'd 2026-07-08 but ships NO compiler API — typescript-eslint cannot support it (#12518 supersedes #10940 as the tracking issue); our lint gate is type-aware. Recheck when typescript-eslint announces TS 7 support (tsgolint path). Rejected: the tsgo-for-typecheck + TS-5-for-eslint split — toolchain complexity for a typecheck that already takes seconds.
+
+## 2026-11-23 — brand — erkos.dev registered
+Choice: domain registered by the user (registrar under their control; no hosting yet). Why: completes the brand system (erkos + pluvian + GitHub org + domain); enables VS Marketplace publisher verification + the future org/landing page. Supersedes the "optional: register erkos.dev" thread in N+7/N+9 deferred lists.
+
+## 2026-11-23 — release — v2.2.2: first extension release, triple-surface tag
+Choice: one tag publishes npm (OIDC+provenance) ∥ Marketplace VSIX (publish-extension job: verify-pat → staged package → smoke → `vsce publish --no-dependencies`) ∥ GH-release VSIX attach. Why: lockstep one-number versioning across surfaces; extension smoke-gates the bundled engine before upload. First live run green (erkos.pluvian-vscode 2.2.2, 153-file staged VSIX). Rejected: separate extension versioning (rejected in spec 11 long ago); publishing the root tree (file:-link breaks vsce npm-list — staging is the load-bearing fix).
