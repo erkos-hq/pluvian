@@ -166,9 +166,14 @@ warnings, no upside for a single-engine product.)
   delivery is "staged real files in the VSIX", not a single esbuild bundle —
   see the packaging scripts; the jiti alias and hcl2json WASM require real
   files.*
-- **P2:** ignore Quick Fix; ungoverned/couldNotEvaluate visibility toggles
+- **P2:** ignore Quick Fix; ~~ungoverned/couldNotEvaluate visibility toggles
   *(the toggles shipped in P1 via settings; the Quick Fix and multi-root
-  remain)*; multi-root workspaces.
+  remain)*~~; ~~multi-root workspaces~~ (**DONE 2026-11-23, v2.3.0**: multi-root
+  AND nested discovery — `discoverProjects()` finds projects per workspace
+  folder or nested under an opened parent, activation via
+  `workspaceContains:**/pluvian.json`, per-project isolated runs with
+  aggregated diagnostics/status; pure discovery module unit-tested). The
+  ignore Quick Fix remains the open P2 item.
 - **P3:** CI publish pipeline (Marketplace + Open VSX), listing icon/README.
 
 ## Open decisions (at build time)

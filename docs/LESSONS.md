@@ -235,3 +235,12 @@ REST update verbs — the rulesets API is PUT-based.
 
 **AVOID** (don't repeat):
 - `vsce publish --no-dependencies` does NOT mean "skip npm-list validation" — it EXCLUDES node_modules from the package entirely (the flag assumes a self-contained bundle). For staged-closure VSIXs, publish via `--packagePath <file>`: ship byte-for-byte what was smoke-tested. Cost of the misreading: 2.2.2 and 2.2.3 shipped engine-less; activation crashed; my 2.2.3 "dormancy" fix addressed a secondary bug while the primary one (module crash) stayed.
+
+## 2026-11-23 — process — pipes swallow test failures
+
+**KEEP** (do again):
+- Run gates UNPIPED (or with `pipefail`) when the exit code gates the next step.
+
+**AVOID** (don't repeat):
+- `npm test 2>&1 | grep 'Tests '` in an `&&` chain — the chain sees grep's exit code, not the tests'. Today that shipped a branch with 1 failing test past a printed "ALL GATES GREEN"; only CI caught it. Same family as the `grep -c` zero-match trap.
+- `localeCompare` for anything order-stable across machines — it is locale-dependent (macOS vs Linux CI). Bytewise `<`/`>` comparison when determinism matters.

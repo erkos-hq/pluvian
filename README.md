@@ -286,6 +286,16 @@ npx @erkos/pluvian@2 check
 **4. Wire CI.** Add `npx @erkos/pluvian@2 check` as a GitHub Actions /
 GitLab CI step, or upload SARIF via `github/codeql-action/upload-sarif@v3`.
 
+**5. Squiggle while you write.** Install the **[pluvian extension for VS
+Code](https://marketplace.visualstudio.com/items?itemName=erkos.pluvian-vscode)**
+(`erkos.pluvian-vscode`) — the same engine, in your editor: diagnostics on
+`.tf` save, could-not-evaluate gaps as hints, a `✓ n · ✗ n · ? n` status
+bar, and a pin mismatch that notifies instead of blocking. Open a pluvian
+project folder (or a parent folder containing several — projects are
+discovered per workspace, each checked with isolated scope, findings
+aggregated in one Problems panel). Zero local Node/npm required: the
+engine ships inside the extension.
+
 ---
 
 ## Credibility

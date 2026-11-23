@@ -1,11 +1,13 @@
 // Extension host glue: the ONLY module that imports `vscode`. Everything
-// testable lives in the pure modules (diagnostics, engine-bridge, debounce).
+// testable lives in the pure modules (diagnostics, engine-bridge, debounce,
+// discover).
 import * as path from 'path'
 import * as vscode from 'vscode'
-import { readEngineConfig, type EngineError } from '@erkos/pluvian'
+import { type EngineError } from '@erkos/pluvian'
 import { pinMismatch, runCheck } from './engine-bridge'
 import { mapReport, type FindingItem, type Severity } from './diagnostics'
 import { debounce } from './debounce'
+import { discoverProjects } from './discover'
 
 const DEBOUNCE_MS = 500
 
@@ -38,12 +40,24 @@ function describeError(e: EngineError): string {
 }
 
 export function activate(context: vscode.ExtensionContext): void {
-  // Single-root P1 (multi-root is P2, spec 11).
-  const folder = vscode.workspace.workspaceFolders?.[0]
-  const root = folder?.uri.fsPath
-  // Dormancy: a workspace without pluvian.json gets no UI, no watchers, no
-  // status item. Scaffold one with `pluvian init` first.
-  const dormant = !root || !readEngineConfig(root).ok
+  // P2 multi-root/nested discovery (spec 11): projects are found per
+  // workspace folder — either the folder itself is a pluvian project
+  // (multi-root) or pluvian projects live nested under it (the "I opened
+  // the parent folder" case). Each project checks independently, with
+  // isolated scope — exactly how the CLI treats multiple roots.
+  const folders = vscode.workspace.workspaceFolders ?? []
+  const projects = discoverProjects(folders.map((f) => f.uri.fsPath))
+  const dormant = projects.length === 0
+
+  // Display name for output lines: path relative to the enclosing workspace
+  // folder (falls back to basename — covers nested projects).
+  const displayName = (root: string): string => {
+    for (const folder of folders) {
+      const rel = path.relative(folder.uri.fsPath, root)
+      if (rel && !rel.startsWith('..')) return rel
+    }
+    return path.basename(root) || root
+  }
 
   // The palette command is ALWAYS registered: VS Code renders statically
   // contributed commands even when activation never wired them, and an
@@ -53,9 +67,9 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('pluvian.checkProject', () => {
       if (dormant) {
         void vscode.window.showInformationMessage(
-          'pluvian is dormant: no pluvian.json at this workspace root. ' +
-            'Open a pluvian project folder directly, or scaffold one with ' +
-            '`npx @erkos/pluvian init`.',
+          'pluvian is dormant: no pluvian.json found in this workspace ' +
+            '(root or subfolders). Open a pluvian project folder, or ' +
+            'scaffold one with `npx @erkos/pluvian init`.',
         )
         return
       }
@@ -73,14 +87,14 @@ export function activate(context: vscode.ExtensionContext): void {
   )
   status.name = 'pluvian'
   status.command = 'pluvian.checkProject'
-  status.tooltip = 'pluvian — click to re-check the project'
+  status.tooltip = 'pluvian — click to re-check all projects'
   status.text = 'pluvian …'
   status.show()
 
   let pinNotified = false
   let running = false
 
-  const toDiagnostic = (item: FindingItem): vscode.Diagnostic => {
+  const toDiagnostic = (item: FindingItem, root: string): vscode.Diagnostic => {
     // The engine reports block-start LINES, not columns: squiggle the
     // whole line when the document is open, an empty range otherwise.
     const lineIdx = Math.max(0, item.line - 1)
@@ -105,63 +119,79 @@ export function activate(context: vscode.ExtensionContext): void {
     if (running) return
     running = true
     try {
-      const outcome = await runCheck(root)
-      if (!outcome.ok) {
-        const msg = describeError(outcome.error)
-        output.appendLine(`[${reason}] ${msg}`)
-        void vscode.window.showErrorMessage(msg)
-        diagnostics.clear()
-        status.text = 'pluvian ✗'
-        status.tooltip = msg
-        return
-      }
-
-      // Never refuse over a pin mismatch — surface it once, run anyway.
-      const mm = pinMismatch(outcome.pinnedVersion, outcome.engineVersion)
-      if (mm && !pinNotified) {
-        pinNotified = true
-        void vscode.window.showInformationMessage(
-          `pluvian: spec pins engine ${mm.pinned}, extension bundles ${mm.running} — align to keep editor and CI verdicts identical`,
-        )
-      }
-
       const cfg = vscode.workspace.getConfiguration('pluvian')
-      const mapped = mapReport(outcome.report, {
+      const visibility = {
         showCouldNotEvaluate: cfg.get<boolean>('showCouldNotEvaluate', true),
         showUngoverned: cfg.get<boolean>('showUngoverned', false),
-      })
+      }
 
       diagnostics.clear()
-      const byFile = new Map<string, vscode.Diagnostic[]>()
-      for (const item of mapped.items) {
-        const list = byFile.get(item.file) ?? []
-        list.push(toDiagnostic(item))
-        byFile.set(item.file, list)
-      }
-      for (const [file, diags] of byFile) {
-        diagnostics.set(
-          vscode.Uri.joinPath(folder.uri, ...file.split('/')),
-          diags,
-        )
-      }
+      let violations = 0
+      let passed = 0
+      let couldNotEvaluate = 0
+      let errors = 0
 
-      const { report } = outcome
-      output.appendLine(
-        `[${reason}] ${report.violations.length} violation(s), ` +
-          `${report.passed} passed, ${report.couldNotEvaluate.length} could ` +
-          `not be evaluated, ${report.ungoverned.length} ungoverned`,
-      )
-      for (const line of mapped.projectLevel) output.appendLine(`  ${line}`)
-      for (const v of report.violations) {
+      for (const root of projects) {
+        const label = displayName(root)
+        const outcome = await runCheck(root)
+        if (!outcome.ok) {
+          // One project failing operationally must not blank the others'
+          // diagnostics or stop the sweep — log it, popup only the first.
+          errors++
+          const msg = describeError(outcome.error)
+          output.appendLine(`[${reason}] ${label}: ${msg}`)
+          if (errors === 1) void vscode.window.showErrorMessage(msg)
+          continue
+        }
+
+        // Never refuse over a pin mismatch — surface it once, run anyway.
+        const mm = pinMismatch(outcome.pinnedVersion, outcome.engineVersion)
+        if (mm && !pinNotified) {
+          pinNotified = true
+          void vscode.window.showInformationMessage(
+            `pluvian: spec pins engine ${mm.pinned}, extension bundles ${mm.running} — align to keep editor and CI verdicts identical`,
+          )
+        }
+
+        const report = outcome.report
+        violations += report.violations.length
+        passed += report.passed
+        couldNotEvaluate += report.couldNotEvaluate.length
+
+        const mapped = mapReport(report, visibility)
+        const byFile = new Map<string, vscode.Diagnostic[]>()
+        for (const item of mapped.items) {
+          const list = byFile.get(item.file) ?? []
+          list.push(toDiagnostic(item, root))
+          byFile.set(item.file, list)
+        }
+        for (const [file, diags] of byFile) {
+          diagnostics.set(
+            vscode.Uri.joinPath(vscode.Uri.file(root), ...file.split('/')),
+            diags,
+          )
+        }
+
         output.appendLine(
-          `  ✗ ${v.resource} (${v.file}:${v.line}) — ${v.message}`,
+          `[${reason}] ${label}: ${report.violations.length} violation(s), ` +
+            `${report.passed} passed, ${report.couldNotEvaluate.length} could ` +
+            `not be evaluated, ${report.ungoverned.length} ungoverned`,
         )
+        for (const line of mapped.projectLevel) output.appendLine(`  ${line}`)
+        for (const v of report.violations) {
+          output.appendLine(
+            `  ✗ ${v.resource} (${v.file}:${v.line}) — ${v.message}`,
+          )
+        }
       }
 
       status.text =
-        `pluvian ✓ ${report.passed} · ✗ ${report.violations.length} · ` +
-        `? ${report.couldNotEvaluate.length}`
-      status.tooltip = 'pluvian — click to re-check the project'
+        `pluvian ✓ ${passed} · ✗ ${violations} · ? ${couldNotEvaluate}` +
+        (errors > 0 ? ` ⚠ ${errors}` : '')
+      status.tooltip =
+        `pluvian — ${projects.length} project(s)` +
+        (errors > 0 ? `, ${errors} failed to run` : '') +
+        ' · click to re-check'
     } finally {
       running = false
     }
@@ -175,16 +205,29 @@ export function activate(context: vscode.ExtensionContext): void {
     (path.basename(doc.fileName) === 'pluvian.json' ||
       /\.pluvian[/\\].*\.ts$/.test(doc.fileName))
 
-  const tfWatcher = vscode.workspace.createFileSystemWatcher(
-    new vscode.RelativePattern(folder, '**/*.tf'),
-  )
-  const specWatcher = vscode.workspace.createFileSystemWatcher(
-    new vscode.RelativePattern(folder, '**/.pluvian/**'),
-  )
-  const configWatcher = vscode.workspace.createFileSystemWatcher(
-    new vscode.RelativePattern(folder, 'pluvian.json'),
-  )
-
+  // Watchers are per workspace folder; the recursive patterns cover
+  // nested projects. `**/pluvian.json` catches nested configs too.
+  for (const folder of folders) {
+    const tfWatcher = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(folder, '**/*.tf'),
+    )
+    const specWatcher = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(folder, '**/.pluvian/**'),
+    )
+    const configWatcher = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(folder, '**/pluvian.json'),
+    )
+    context.subscriptions.push(tfWatcher, specWatcher, configWatcher)
+    tfWatcher.onDidChange(schedule, null, context.subscriptions)
+    tfWatcher.onDidCreate(schedule, null, context.subscriptions)
+    tfWatcher.onDidDelete(schedule, null, context.subscriptions)
+    specWatcher.onDidChange(schedule, null, context.subscriptions)
+    specWatcher.onDidCreate(schedule, null, context.subscriptions)
+    specWatcher.onDidDelete(schedule, null, context.subscriptions)
+    configWatcher.onDidChange(schedule, null, context.subscriptions)
+    configWatcher.onDidCreate(schedule, null, context.subscriptions)
+    configWatcher.onDidDelete(schedule, null, context.subscriptions)
+  }
   context.subscriptions.push(
     output,
     diagnostics,
@@ -195,19 +238,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidOpenTextDocument((doc) => {
       if (isTf(doc)) schedule()
     }),
-    tfWatcher,
-    specWatcher,
-    configWatcher,
   )
-  tfWatcher.onDidChange(schedule, null, context.subscriptions)
-  tfWatcher.onDidCreate(schedule, null, context.subscriptions)
-  tfWatcher.onDidDelete(schedule, null, context.subscriptions)
-  specWatcher.onDidChange(schedule, null, context.subscriptions)
-  specWatcher.onDidCreate(schedule, null, context.subscriptions)
-  specWatcher.onDidDelete(schedule, null, context.subscriptions)
-  configWatcher.onDidChange(schedule, null, context.subscriptions)
-  configWatcher.onDidCreate(schedule, null, context.subscriptions)
-  configWatcher.onDidDelete(schedule, null, context.subscriptions)
 
   void run('startup')
 }
