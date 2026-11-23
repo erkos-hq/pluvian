@@ -9,6 +9,16 @@ whether re-reading their spec is warranted.
 > Pre-2.0.0 entries below were published as `@dotzen/dotzen` — the same tool,
 > before the rebrand (see 2.0.0).
 
+## 2.2.4
+
+**Extension-only: Marketplace builds now ship the engine.** The 2.2.2 and
+2.2.3 Marketplace VSIXs were uploaded without `node_modules` — `vsce
+publish --no-dependencies` excludes it entirely (it assumes a
+self-contained bundle), so the extension crashed on activation with
+`Cannot find module '@erkos/pluvian'` and every command surfaced as
+"command not found". Publishing now uploads the exact smoke-tested VSIX
+via `vsce publish --packagePath`. Engine, CLI, and verdicts unchanged.
+
 ## 2.2.3
 
 **Extension-only: dormant workspaces get guidance, not a raw error.**

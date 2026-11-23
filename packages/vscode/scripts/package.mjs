@@ -113,17 +113,18 @@ const r = spawnSync(vsce, ['package', '-o', path.join(pkgRoot, out)], {
 })
 if (r.status !== 0) die(`vsce package failed (exit ${r.status})`)
 
-// `--publish` (CI release flow): upload the SAME staged closure to the
-// Marketplace, run from inside the staged tree. `--no-dependencies` skips
-// vsce's npm-list resolution — the file:../cli link cannot survive it,
-// which is the whole reason this script exists; the staged manifest +
-// node_modules ARE the validated closure. vsce reads VSCE_PAT from the
-// environment. The VSIX above was already smoke-tested by the caller.
+// `--publish` (CI release flow): upload the EXACT VSIX built above — never
+// let vsce repackage. `vsce publish --no-dependencies` EXCLUDES node_modules
+// entirely (the flag assumes you bundled everything yourself), which shipped
+// engine-less builds to the Marketplace in 2.2.2/2.2.3 — activation died on
+// `require('@erkos/pluvian')`. `--packagePath` uploads the artifact we just
+// built and the caller smoke-tested. vsce reads VSCE_PAT from the env.
 if (process.argv.includes('--publish')) {
-  const p = spawnSync(vsce, ['publish', '--no-dependencies'], {
-    cwd: pack,
-    stdio: 'inherit',
-  })
+  const p = spawnSync(
+    vsce,
+    ['publish', '--packagePath', path.join(pkgRoot, out)],
+    { cwd: pkgRoot, stdio: 'inherit' },
+  )
   if (p.status !== 0) die(`vsce publish failed (exit ${p.status})`)
   console.log(`published erkos.${pkg.name}@${pkg.version} to the Marketplace`)
 }

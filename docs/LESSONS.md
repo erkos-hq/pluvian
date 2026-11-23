@@ -226,3 +226,12 @@ REST update verbs — the rulesets API is PUT-based.
 
 **AVOID** (don't repeat):
 - Leaving a `contributes.commands` entry unregistered when activation bails (dormancy): VS Code still renders it in the palette, and invoking it surfaces the raw "command 'x' not found". Always register; dormant handlers should explain, not error.
+
+## 2026-11-23 — vscode — marketplace builds shipped without the engine (two rounds)
+
+**KEEP** (do again):
+- The on-disk Extension Host log had the answer from the FIRST report: `~/Library/Application Support/Code/logs/<session>/window*/exthost/exthost.log` — "Activating extension failed: Cannot find module '@erkos/pluvian'". Diagnose from logs on disk before theorizing.
+- Verify the SHIPPED artifact, not its sibling: our smoke gate tested `npm run package`'s VSIX while `--publish` repackaged separately — the Marketplace served a build nothing had verified. Post-publish, install from the Marketplace and inspect (`code --install-extension` + `ls node_modules`).
+
+**AVOID** (don't repeat):
+- `vsce publish --no-dependencies` does NOT mean "skip npm-list validation" — it EXCLUDES node_modules from the package entirely (the flag assumes a self-contained bundle). For staged-closure VSIXs, publish via `--packagePath <file>`: ship byte-for-byte what was smoke-tested. Cost of the misreading: 2.2.2 and 2.2.3 shipped engine-less; activation crashed; my 2.2.3 "dormancy" fix addressed a secondary bug while the primary one (module crash) stayed.
