@@ -9,6 +9,17 @@ whether re-reading their spec is warranted.
 > Pre-2.0.0 entries below were published as `@dotzen/dotzen` — the same tool,
 > before the rebrand (see 2.0.0).
 
+## 2.2.3
+
+**Extension-only: dormant workspaces get guidance, not a raw error.**
+First user-found extension bug (dogfooding works): VS Code renders
+statically contributed commands in the palette even when the extension
+never activated for the workspace — so running _pluvian: Check Project_ in
+a folder without `pluvian.json` (or a parent folder of pluvian projects)
+surfaced VS Code's raw "command not found". The command is now always
+registered; when dormant it explains how to wake the extension instead.
+Engine, CLI, and verdicts unchanged.
+
 ## 2.2.2
 
 **First VS Code extension release.** The engine now ships a second face:

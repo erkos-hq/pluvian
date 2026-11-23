@@ -40,12 +40,30 @@ function describeError(e: EngineError): string {
 export function activate(context: vscode.ExtensionContext): void {
   // Single-root P1 (multi-root is P2, spec 11).
   const folder = vscode.workspace.workspaceFolders?.[0]
-  if (!folder) return
-  const root = folder.uri.fsPath
+  const root = folder?.uri.fsPath
+  // Dormancy: a workspace without pluvian.json gets no UI, no watchers, no
+  // status item. Scaffold one with `pluvian init` first.
+  const dormant = !root || !readEngineConfig(root).ok
 
-  // Dormancy: a workspace without pluvian.json gets nothing — no UI, no
-  // watchers, no status item. Scaffold one with `pluvian init` first.
-  if (!readEngineConfig(root).ok) return
+  // The palette command is ALWAYS registered: VS Code renders statically
+  // contributed commands even when activation never wired them, and an
+  // unregistered command surfaces as VS Code's raw "command not found".
+  // Dormant must explain, not error.
+  context.subscriptions.push(
+    vscode.commands.registerCommand('pluvian.checkProject', () => {
+      if (dormant) {
+        void vscode.window.showInformationMessage(
+          'pluvian is dormant: no pluvian.json at this workspace root. ' +
+            'Open a pluvian project folder directly, or scaffold one with ' +
+            '`npx @erkos/pluvian init`.',
+        )
+        return
+      }
+      void run('command')
+    }),
+  )
+
+  if (dormant) return
 
   const output = vscode.window.createOutputChannel('pluvian')
   const diagnostics = vscode.languages.createDiagnosticCollection('pluvian')
@@ -167,16 +185,10 @@ export function activate(context: vscode.ExtensionContext): void {
     new vscode.RelativePattern(folder, 'pluvian.json'),
   )
 
-  const checkCommand = vscode.commands.registerCommand(
-    'pluvian.checkProject',
-    () => void run('command'),
-  )
-
   context.subscriptions.push(
     output,
     diagnostics,
     status,
-    checkCommand,
     vscode.workspace.onDidSaveTextDocument((doc) => {
       if (isTf(doc) || isContract(doc)) schedule()
     }),

@@ -218,3 +218,11 @@ REST update verbs — the rulesets API is PUT-based.
 
 **AVOID** (don't repeat):
 - Don't `--force` the no-fix set (minimatch GHSA-g3hv-75wg-m249, picomatch GHSA-fc5q-39xc-vjpf — ranges cover the latest releases; dev-only glob chains). Wait for upstream, same policy as the September braces advisory (which upstream eventually fixed).
+
+## 2026-11-23 — vscode — contributed commands must register unconditionally
+
+**KEEP** (do again):
+- Dogfooding found the first extension bug within hours of publishing — real usage in real folders beats every staged test.
+
+**AVOID** (don't repeat):
+- Leaving a `contributes.commands` entry unregistered when activation bails (dormancy): VS Code still renders it in the palette, and invoking it surfaces the raw "command 'x' not found". Always register; dormant handlers should explain, not error.
