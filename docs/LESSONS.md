@@ -209,3 +209,12 @@ REST update verbs — the rulesets API is PUT-based.
 
 **AVOID** (don't repeat):
 - Writing `check <path>` examples from memory of the intended UX — the CLI positional is the PROJECT ROOT (where pluvian.json lives), not a Terraform path; `init`'s own output, the tutorial, and the demo tape all correctly use the no-arg form. Grep the tree for a command shape before enshrining it in the hero.
+
+## 2026-11-23 — audit — advisory-DB drift + the November no-fix set
+
+**KEEP** (do again):
+- When a Renovate PR's audit job fails but local main shows no high, RE-RUN the failed job before diagnosing — npm's advisory severity/data moves (picomatch was HIGH on Nov 18, moderate by Nov 23; the branch-only failure evaporated).
+- `npm audit fix` still cleared 8 of 11 fixable moderates; both packages audit 0 high.
+
+**AVOID** (don't repeat):
+- Don't `--force` the no-fix set (minimatch GHSA-g3hv-75wg-m249, picomatch GHSA-fc5q-39xc-vjpf — ranges cover the latest releases; dev-only glob chains). Wait for upstream, same policy as the September braces advisory (which upstream eventually fixed).
