@@ -58,6 +58,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "package": "node esbuild.js && node scripts/package.mjs",
+    "publish": "node esbuild.js && node scripts/package.mjs --publish",
     "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
