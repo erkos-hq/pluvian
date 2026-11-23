@@ -1,11 +1,16 @@
-# pluvian release — publish @erkos/pluvian to npm on a vX.Y.Z tag.
+# pluvian release — publish @erkos/pluvian to npm + the VS Code extension
+# to the Marketplace, on a vX.Y.Z tag.
 #
-# Uses npm Trusted Publishing (OIDC) — NO stored NPM_TOKEN. The GitHub
+# npm uses Trusted Publishing (OIDC) — NO stored NPM_TOKEN. The GitHub
 # Actions OIDC token is exchanged for a short-lived npm publish token at
 # publish time. Requires the Trusted Publisher to be configured on npmjs.com:
-#   repository owner = ealmachado-eng, name = pluvian, workflow = release.yml
+#   repository owner = erkos-hq, name = pluvian, workflow = release.yml
 # (see .claude/skills/pluvian-release/SKILL.md — a mismatch surfaces only at
 # publish time as ENEEDAUTH).
+#
+# The extension publishes with VSCE_PAT (Marketplace has no OIDC flow yet —
+# and note global-scope PATs are deprecated 2027-01-27; rotate via the
+# dispatchable publisher-verify.yml workflow when the time comes).
 #
 # The repo is PUBLIC on GitHub → `--provenance` works (sigstore attestation
 # on the npm page). This was E422-blocked on the old private GitLab repo.
@@ -78,3 +83,56 @@ jobs:
       - run: npm run build
       # Public repo → sigstore provenance attestation lands on the npm page.
       - run: npm publish --access public --provenance
+
+  # VS Code Marketplace — the extension face of the same engine (spec 11
+  # P3). Lockstep with the npm publish: same tag, same version, runs in
+  # parallel (independent targets; both gated). The staged-closure VSIX
+  # (scripts/package.mjs) is packaged + smoke-tested here, then uploaded
+  # from inside the staged tree via `vsce publish --no-dependencies`.
+  publish-extension:
+    needs: [gate]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # attach the VSIX to the GitHub release
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: |
+            packages/cli/package-lock.json
+            packages/vscode/package-lock.json
+      # Fail fast on credential problems (rotation, deprecation) before
+      # any heavy work — org-scoped-vs-global PAT verdict lands here too.
+      - name: Verify marketplace credentials
+        run: npx --yes @vscode/vsce@4 verify-pat erkos
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      # Engine first: the file:../cli link resolves deps + types from it.
+      - name: Install + build engine package
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+        working-directory: packages/cli
+      - name: Package + smoke the extension
+        run: |
+          npm install --no-audit --no-fund
+          npm run package
+          npm run smoke
+        working-directory: packages/vscode
+      - name: Publish to the Marketplace
+        run: npm run publish
+        working-directory: packages/vscode
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      # Best-effort side-loading artifact on the GitHub release.
+      - name: Attach VSIX to the GitHub release
+        run: |
+          vsix="pluvian-$(node -p 'require("./package.json").version').vsix"
+          gh release upload "$GITHUB_REF_NAME" "$vsix" --clobber ||
+            gh release create "$GITHUB_REF_NAME" --generate-notes "$vsix"
+        working-directory: packages/vscode
+        env:
+          GH_TOKEN: ${{ github.token }}
+        continue-on-error: true
