@@ -9,6 +9,22 @@ whether re-reading their spec is warranted.
 > Pre-2.0.0 entries below were published as `@dotzen/dotzen` — the same tool,
 > before the rebrand (see 2.0.0).
 
+## 2.2.2
+
+**First VS Code extension release.** The engine now ships a second face:
+**`erkos.pluvian-vscode`** on the Visual Studio Marketplace — in-editor
+diagnostics from the exact same `check()` the CLI runs (dormant without a
+`pluvian.json`; squiggles on `.tf` save; pin mismatch notifies and runs).
+Versioned in lockstep with the engine, cut from the same tag, gated by the
+same CI. The VSIX bundles the engine as a staged closure (jiti + hcl2json
+WASM as real files — no user-side Node/npm), and every release smoke-tests
+the bundled engine against the demo project before upload.
+
+Also in this release: November audit clears (8 fixable moderates via
+`npm audit fix`), dependency refreshes, and the Marketplace publish
+pipeline itself (`publish-extension` job, org-scoped `VSCE_PAT` — verified
+compatible ahead of the 2027-01 global-PAT deprecation).
+
 ## 2.2.1
 
 **Docs-only: corrected README on npm.** The 30-second-demo and Quick Start
