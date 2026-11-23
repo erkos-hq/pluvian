@@ -226,7 +226,7 @@ Then read `docs/ROADMAP.md` (remaining items + dogfood log) + this file (session
 - **VS Code P3** — Marketplace + Open VSX publish (needs publisher account, `VSCE_PAT`, OVSX token; final marketplace id decided then — manifest is `pluvian-vscode`/publisher `erkos`).
 - Launch post rewrite/post for pluvian (`docs/launch/launch-post.md`) — still the #1 traction lever; natural pairing with P3 (extension installable at launch).
 - N+3 leftovers still open: README trust-boundary note (spec.ts exec), C0/C1 control-char strip in `makePaint` (`packages/cli/src/report/report.ts:23`), stale `wip-2026-08-18-1540` tag deletion.
-- Optional: register erkos.dev.
+- ~~Optional: register erkos.dev.~~ (done — 2026-11-23; DECISIONS entry appended)
 
 **Next resume step:**
 - `npm run context` from `packages/cli/`; pick between launch post (P3-pairing recommended: publish the VSIX, then post) or VS Code P2. Engine/CI/ruleset current; nothing mid-flight (no WIP tag — clean tree; this section + the DECISIONS line below are uncommitted by design, per `/handoff`).
@@ -247,7 +247,7 @@ Then read `docs/ROADMAP.md` (remaining items + dogfood log) + this file (session
 - **charax design sprint (no repo changes — advisory):** naming screened (npm/GitHub/common-law): finalists **charax** (χάραξ, palisade stake; χαρακτήρ "the identifying stamp" etymology; pluvian-grade clean) and **pylae** (πύλαι, gates); `kleido` killed by Kaleido.io (IAM-adjacent phonetic twin) + Arm Kleidi. Recommendation: **fort route** (erkos scene absorbs the animals; enterprise identity buyers; systematic namespace) over animal route; **not locked — user holding**. Capability map sketched: escalation detection = stateful reachability + technique catalogs as presets; dataset flywheel (engine-as-oracle over synthetic identity graphs); agentic scope-creep = the white space. DSL verdict: keep fluent interface for both tools (preserve sugar→IR boundary for charax; fix per-resource narrowing someday); ROP verdict: right choice, keep for charax.
 
 **Deferred / blocked:**
-- **VS Code P3** — user must create Marketplace publisher + Open VSX account (+ VSCE_PAT/OVSX secrets); then publish pipeline, final marketplace id (manifest `pluvian-vscode`/`erkos`), icon/README; a 2.2.0 VSIX is already buildable via `npm run package`.
+- ~~**VS Code P3**~~ (Marketplace half DONE — 2026-11-23: `erkos` publisher + org-scoped `VSCE_PAT` (verified; Jan-2027 global-PAT deprecation moot), publish-extension pipeline (#47), **`erkos.pluvian-vscode` 2.2.2 LIVE** with VSIX attached to the GH release. Remaining: Open VSX account + `OVSX_PAT` job; listing icon + erkos.dev badge when brand assets/domain verification land — all non-blocking.)
 - **Launch post** (`docs/launch/launch-post.md`) — pair with P3.
 - VS Code P2 (ignore Quick Fix, multi-root).
 - N+3 leftovers still open: README trust-boundary note, C0/C1 strip in `makePaint` (`packages/cli/src/report/report.ts`), stale `wip-2026-08-18-1540` tag.
