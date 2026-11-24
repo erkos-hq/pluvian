@@ -8,6 +8,7 @@ import { pinMismatch, runCheck } from './engine-bridge'
 import { mapReport, type FindingItem, type Severity } from './diagnostics'
 import { debounce } from './debounce'
 import { discoverProjects } from './discover'
+import { ignoreEdit } from './codeactions'
 
 const DEBOUNCE_MS = 500
 
@@ -238,6 +239,54 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidOpenTextDocument((doc) => {
       if (isTf(doc)) schedule()
     }),
+  )
+
+  // Quick Fix (spec 11 P2): on a pluvian finding, offer to insert the
+  // rule-scoped ignore directive above the block. The reason placeholder
+  // must be filled by the human before the next save — an ignore is a
+  // decision with a justification, not a dismiss button.
+  const ignoreProvider: vscode.CodeActionProvider = {
+    provideCodeActions: (document, range) => {
+      const diags = vscode.languages
+        .getDiagnostics(document.uri)
+        .filter(
+          (d) =>
+            d.source === 'pluvian' &&
+            d.range.start.line <= range.end.line &&
+            d.range.end.line >= range.start.line,
+        )
+      const seen = new Set<string>()
+      const actions: vscode.CodeAction[] = []
+      for (const diag of diags) {
+        const ruleId = typeof diag.code === 'string' ? diag.code : undefined
+        if (!ruleId || seen.has(ruleId)) continue
+        seen.add(ruleId)
+        const edit = ignoreEdit(
+          document.getText().split('\n'),
+          diag.range.start.line + 1,
+          ruleId,
+        )
+        const action = new vscode.CodeAction(
+          `pluvian: ignore "${ruleId}" on this block`,
+          vscode.CodeActionKind.QuickFix,
+        )
+        const workspaceEdit = new vscode.WorkspaceEdit()
+        workspaceEdit.insert(
+          document.uri,
+          new vscode.Position(edit.insertBeforeLine - 1, 0),
+          edit.text + '\n',
+        )
+        action.edit = workspaceEdit
+        actions.push(action)
+      }
+      return actions
+    },
+  }
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider(
+      [{ language: 'terraform' }, { pattern: '**/*.tf' }],
+      ignoreProvider,
+    ),
   )
 
   void run('startup')

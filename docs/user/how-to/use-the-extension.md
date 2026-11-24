@@ -42,7 +42,10 @@ palette entry explains how to scaffold one instead of erroring.
   per-project report goes to the **pluvian output channel**.
 - **Ignore directive**: `# pluvian:ignore: <reason>` on the line above a
   block (or trailing it) suppresses that block's findings — the editor
-  view updates on the next save, same as CI.
+  view updates on the next save, same as CI. Faster: put the cursor on a
+  finding and hit `Cmd+.` (💡) — the Quick Fix inserts a **rule-scoped**
+  directive (`# pluvian:ignore <ruleId>: <reason>`) above the block; fill
+  the `<reason>` placeholder and save.
 
 ## Editor and CI never disagree
 

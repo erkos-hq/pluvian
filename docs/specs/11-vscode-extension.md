@@ -173,7 +173,11 @@ warnings, no upside for a single-engine product.)
   folder or nested under an opened parent, activation via
   `workspaceContains:**/pluvian.json`, per-project isolated runs with
   aggregated diagnostics/status; pure discovery module unit-tested). The
-  ignore Quick Fix remains the open P2 item.
+  ignore Quick Fix ~~remains the open P2 item~~ (**DONE 2026-11-24,
+  v2.4.0**: `Cmd+.` on a finding inserts a rule-scoped
+  `# pluvian:ignore <ruleId>: <reason>` above the block — pure
+  `codeactions.ts` + provider wiring; never the suppress-everything form;
+  the reason placeholder is mandatory by design). **P2 is complete.**
 - **P3:** CI publish pipeline (Marketplace + Open VSX), listing icon/README.
 
 ## Open decisions (at build time)

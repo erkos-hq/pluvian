@@ -9,6 +9,27 @@ whether re-reading their spec is warranted.
 > Pre-2.0.0 entries below were published as `@dotzen/dotzen` — the same tool,
 > before the rebrand (see 2.0.0).
 
+## 2.4.0
+
+**Extension: the ignore Quick Fix (spec 11 P2 complete).** On any pluvian
+finding, `Cmd+.` / the 💡 menu now offers **"pluvian: ignore '<ruleId>' on
+this block"** — it inserts a rule-scoped directive directly above the
+resource block:
+
+```hcl
+# pluvian:ignore no-open-ssh: <reason>
+resource "aws_security_group" "open_ssh" {
+```
+
+The Quick Fix always emits the rule-scoped form (never the
+suppress-everything one), matches the block's indentation, and ships the
+reason as a placeholder the human must fill before the next save — an
+ignore is a decision with a justification, not a dismiss button. The
+engine honors it on the next check; editor and CI agree by construction.
+With this, spec 11's P2 is complete (visibility toggles in P1,
+multi-root/nested discovery in 2.3.0). Engine, CLI, and verdicts
+unchanged.
+
 ## 2.3.0
 
 **Extension: multi-root + nested project discovery (spec 11 P2).** The
