@@ -175,6 +175,8 @@ pluvian:check:
 
 Want findings in the GitHub **Security tab** with file:line PR annotations? Emit SARIF and upload it — see [read the output](./how-to/read-the-output.md#sarif--github-security-tab).
 
+Want them **in your editor, while the Terraform is being written**? Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=erkos.pluvian-vscode) — the same engine, as squiggles on save. See [use the extension](./how-to/use-the-extension.md).
+
 ## You're done
 
 You now have:
@@ -182,6 +184,7 @@ You now have:
 - A version-pinned, zero-install governance check.
 - A custom rule expressing **your org's policy**, in reviewable TypeScript.
 - A CI gate that fails on violations, with an auditable exception path.
+- (Optional) in-editor diagnostics from the same engine — CLI, CI, and editor can never disagree.
 
 ## Where next
 
