@@ -16,7 +16,8 @@ cloudposse) · 3 output formats (terminal, JSON, SARIF 2.1.0) · a working
 subnet") — the one class of control static per-resource tools don't cover ·
 since **v2.1.0** the engine is also a **public library** (`check` + report
 types from the package index) and ships an in-editor **VS Code extension**
-(`packages/vscode`, spec 11 — Marketplace/Open VSX publish pending).
+(`packages/vscode`, spec 11 — published on the VS Code Marketplace since
+v2.2.2; Open VSX pending).
 
 The engine is feature-complete for static Terraform governance. What
 follows is the detailed dogfood log that got it there — useful for
