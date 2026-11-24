@@ -109,6 +109,10 @@ jobs:
         run: npx --yes @vscode/vsce@4 verify-pat erkos
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      - name: Verify Open VSX credentials
+        run: npx --yes ovsx@latest verify-pat erkos
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
       # Engine first: the file:../cli link resolves deps + types from it.
       - name: Install + build engine package
         run: |
@@ -126,6 +130,16 @@ jobs:
         working-directory: packages/vscode
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      # Open VSX (Cursor / Windsurf / VSCodium reach): publishes the SAME
+      # prebuilt VSIX — never a repackaged one (the --no-dependencies
+      # lesson). ovsx takes the file path directly.
+      - name: Publish to Open VSX
+        run: |
+          vsix="pluvian-$(node -p 'require("./package.json").version').vsix"
+          npx --yes ovsx@latest publish "$vsix"
+        working-directory: packages/vscode
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
       # Best-effort side-loading artifact on the GitHub release.
       - name: Attach VSIX to the GitHub release
         run: |

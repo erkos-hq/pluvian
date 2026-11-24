@@ -1,8 +1,8 @@
-# Marketplace credential check — dispatchable, no repo checkout needed.
-# Run after creating or rotating VSCE_PAT, and during the Jan-2027
-# global-PAT deprecation migration (org-scoped → replacement flow).
-# Fails fast with a clear message if the token lacks publish rights for
-# the `erkos` publisher.
+# Publisher credential check — dispatchable, no repo checkout needed.
+# Run after creating or rotating VSCE_PAT / OVSX_PAT, and during the
+# Jan-2027 global-PAT deprecation migration (org-scoped → replacement
+# flow). Fails fast with a clear message if either token lacks publish
+# rights for the `erkos` namespace/publisher.
 name: publisher-verify
 
 on:
@@ -21,3 +21,6 @@ jobs:
       - run: npx --yes @vscode/vsce@4 verify-pat erkos
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      - run: npx --yes ovsx@latest verify-pat erkos
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
