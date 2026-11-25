@@ -244,3 +244,11 @@ REST update verbs — the rulesets API is PUT-based.
 **AVOID** (don't repeat):
 - `npm test 2>&1 | grep 'Tests '` in an `&&` chain — the chain sees grep's exit code, not the tests'. Today that shipped a branch with 1 failing test past a printed "ALL GATES GREEN"; only CI caught it. Same family as the `grep -c` zero-match trap.
 - `localeCompare` for anything order-stable across machines — it is locale-dependent (macOS vs Linux CI). Bytewise `<`/`>` comparison when determinism matters.
+
+## 2026-11-25 — naming — "mal" prefix and phonetic negative screening
+
+**KEEP** (do again):
+- Screen for NEGATIVE PHONETIC PREFIXES across the user's native language AND English: "mal" (disease/defect), "adeu" (farewell), "salmo" (psalm) each killed a leading candidate late in the process.
+
+**AVOID** (don't repeat):
+- Falling in love with a story and missing that the name starts with a disease prefix. "Malurus" (fairy-wren, password story) was nearly locked before the user caught "mal" → malaria/malware/malfunction. For a SECURITY tool, "mal-" is disqualifying in every Latin-derived language. Add "negative prefix screen" to the naming checklist alongside npm/GitHub/common-law.
