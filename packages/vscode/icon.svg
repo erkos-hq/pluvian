@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" fill="#050505" rx="28"/>
+  <text x="60" y="88"
+        font-family="'Red Hat Display', 'Inter', -apple-system, sans-serif"
+        font-weight="700"
+        font-size="64"
+        fill="#4DB6AC"
+        text-anchor="middle"
+        letter-spacing="-4">/p</text>
+</svg>
