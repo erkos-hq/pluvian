@@ -9,6 +9,17 @@ whether re-reading their spec is warranted.
 > Pre-2.0.0 entries below were published as `@dotzen/dotzen` — the same tool,
 > before the rebrand (see 2.0.0).
 
+## 2.4.1
+
+**Extension: brand identity — `/p` icon + first Open VSX release.**
+
+The extension now ships a brand icon: `/p` in teal (the product marker) on
+dark, rendered in Red Hat Display 700. The same icon serves both the VS Code
+Marketplace and Open VSX (both read the `icon` field from the VSIX manifest).
+Also in this release: the extension is now published to **Open VSX**
+(`open-vsx.org`), covering Cursor, Windsurf, and VSCodium users. No functional
+changes to the engine or extension behavior.
+
 ## 2.4.0
 
 **Extension: the ignore Quick Fix (spec 11 P2 complete).** On any pluvian

@@ -58,6 +58,7 @@ writeFileSync(
   JSON.stringify(stagedManifest, null, 2) + '\n',
 )
 cpSync(path.join(pkgRoot, 'README.md'), path.join(pack, 'README.md'))
+cpSync(path.join(pkgRoot, 'icon.png'), path.join(pack, 'icon.png'))
 cpSync(path.join(pkgRoot, 'dist'), path.join(pack, 'dist'), {
   recursive: true,
 })
