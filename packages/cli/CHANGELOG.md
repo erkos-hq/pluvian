@@ -9,6 +9,15 @@ whether re-reading their spec is warranted.
 > Pre-2.0.0 entries below were published as `@dotzen/dotzen` — the same tool,
 > before the rebrand (see 2.0.0).
 
+## 2.4.3
+
+**Extension: icon `/p` enlarged.** The mark now fills 64% of the icon
+height (was ~48%) — reads clearly at the 16px tab size. Also in this
+release: the icon generator is committed as
+`packages/vscode/scripts/icon.mjs` (glyph-path pipeline, immune to the
+opentype.js rounding-cache NaN), replacing the previously stale
+text-based `icon.svg`. No functional changes.
+
 ## 2.4.2
 
 **Extension: icon glyph fix — real Red Hat Display paths.** The 2.4.1 icon
