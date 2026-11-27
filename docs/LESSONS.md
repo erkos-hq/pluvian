@@ -252,3 +252,9 @@ REST update verbs — the rulesets API is PUT-based.
 
 **AVOID** (don't repeat):
 - Falling in love with a story and missing that the name starts with a disease prefix. "Malurus" (fairy-wren, password story) was nearly locked before the user caught "mal" → malaria/malware/malfunction. For a SECURITY tool, "mal-" is disqualifying in every Latin-derived language. Add "negative prefix screen" to the naming checklist alongside npm/GitHub/common-law.
+
+## 2026-11-27 — brand assets — opentype.js NaN cache poisons SVG paths
+
+- **KEEP**: `Path.toPathData`/`toSVG` from opentype.js is NOT safe for glyph runs at accumulated float offsets. Its `roundDecimal` builds scientific notation by string concat (`decimalPart + "e+2"`) and caches per-decimal-part in a GLOBAL map; a coordinate with denormal decimal noise (e.g. `101.00000000000001`) makes the string unparsable → `Math.round` = NaN → **NaN cached forever for that decimal part**. Later coordinates sharing the noise inherit NaN into the `d` attribute, and librsvg (sharp) silently drops the path — mid-word ("Governanc", "Prose a"). Fix: serialize commands with a local `Math.round(v*100)/100` formatter, one `<path>` per glyph so one bad element can't eat a line. Lives in erkos-dev `brand/generate.mjs` with the full writeup.
+- **KEEP**: ink-extent checks (min/max pixel) do NOT catch interior missing glyphs — a mid-word dropout doesn't move the extremes. Verify rendered text with per-column ink profiles (longest internal gap ≤ space width) and/or full transcription, not just extents.
+- **AVOID**: trusting a visual pass that doesn't transcribe every line — the first social-preview review "passed" a truncated subtitle it never read out.
